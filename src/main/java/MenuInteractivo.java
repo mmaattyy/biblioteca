@@ -1,18 +1,16 @@
 import java.util.*;
 
 public class MenuInteractivo {
-    // Mapeo de opciones a métodos correspondientes
     private static final Map<String, Runnable> OPCIONES = new LinkedHashMap<>();
 
     static {
-        OPCIONES.put("ejemplo", MenuInteractivo::mostrar); // El primer dato es lo que se muestra
-        // en la pantalla, el segundo es el llamado al método
-    }
-    public static void mostrar(){
-        System.out.println("ejemplo ejemplo");
-    }
-    public static void main(String[] args) {
-        mostrarMenu();
+        OPCIONES.put("Agregar usuario", Main::agregarUsuario);
+        OPCIONES.put("Eliminar usuario", Main::eliminarUsuario);
+        OPCIONES.put("Agregar libro", Main::agregarLibro);
+        OPCIONES.put("Eliminar libro", Main::eliminarLibro);
+        OPCIONES.put("Realizar préstamo", Main::realizarPrestamo);
+        OPCIONES.put("Realizar devolución", Main::realizarDevolucion);
+        OPCIONES.put("Mostrar información", Main::mostrarInformacion);
     }
 
     public static void mostrarMenu() {
@@ -29,23 +27,28 @@ public class MenuInteractivo {
             System.out.println(i + ". Salir");
             System.out.println("Seleccione una opción: ");
 
-            int opcionSeleccionada = scanner.nextInt();
-            scanner.nextLine();
+            try {
+                int opcionSeleccionada = scanner.nextInt();
+                scanner.nextLine();
 
-            if (opcionSeleccionada >= 1 && opcionSeleccionada <= OPCIONES.size()) {
-                List<Runnable> listaOpciones = new ArrayList<>(OPCIONES.values());
-                if (opcionSeleccionada == OPCIONES.size() + 1) {
-                    salir = true;
+                if (opcionSeleccionada >= 1 && opcionSeleccionada <= OPCIONES.size()) {
+                    List<Runnable> listaOpciones = new ArrayList<>(OPCIONES.values());
+                    if (opcionSeleccionada == OPCIONES.size() + 1) {
+                        salir = true;
+                    } else {
+                        Runnable opcion = listaOpciones.get(opcionSeleccionada - 1);
+                        opcion.run();
+                    }
                 } else {
-                    Runnable opcion = listaOpciones.get(opcionSeleccionada - 1);
-                    opcion.run();
+                    System.out.println("Opción inválida. Por favor, seleccione una opción válida.");
                 }
-            } else {
-                System.out.println("Opción inválida. Por favor, seleccione una opción válida.");
+            } catch (InputMismatchException e) {
+                System.out.println("Entrada inválida. Por favor, ingrese un número asociado a las siguientes opciones:");
+                scanner.nextLine();
             }
         }
 
-        System.out.println("¡Gracias por usar el menú interactivo!");
+        System.out.println("Programa finalizado");
         scanner.close();
     }
 }
