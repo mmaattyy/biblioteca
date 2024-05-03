@@ -1,43 +1,107 @@
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Main {
+    private static Biblioteca biblioteca = new Biblioteca();
+    private static Scanner scanner = new Scanner(System.in);
+
     public static void main(String[] args) {
-        Biblioteca biblioteca = new Biblioteca();
+        MenuInteractivo.mostrarMenu();
+    }
 
-        Libro libro1 = new Libro("El señor de los anillos", "J.R.R. Tolkien", "Fantasía", 3);
-        Libro libro2 = new Libro("Cien años de soledad", "Gabriel García Márquez", "Realismo mágico", 5);
-        Libro libro3 = new Libro("1984", "George Orwell", "Ciencia ficción", 2);
+    public static void agregarUsuario() {
+        String nombre = solicitarEntrada("Ingrese el nombre del usuario:");
+        String rut = solicitarRut();
+        String tipo = solicitarEntrada("Ingrese el tipo de usuario (Estudiante/Profesor/Personal de la Biblioteca):");
+        Usuario usuario = new Usuario(nombre, rut, tipo);
+        biblioteca.agregarUsuario(usuario);
+        System.out.println("Usuario agregado con éxito.");
+    }
 
-        biblioteca.agregarLibro(libro1);
-        biblioteca.agregarLibro(libro2);
-        biblioteca.agregarLibro(libro3);
+    public static void eliminarUsuario() {
+        String rut = solicitarRut();
+        Usuario usuario = buscarUsuarioPorRut(rut);
+        if (usuario != null) {
+            biblioteca.eliminarUsuario(usuario);
+            System.out.println("Usuario eliminado con éxito.");
+        } else {
+            System.out.println("Usuario no encontrado.");
+        }
+    }
 
-        Usuario usuario1 = new Usuario("Juan", "Estudiante");
-        Usuario usuario2 = new Usuario("María", "Profesor");
+    public static void agregarLibro() {
+        String titulo = solicitarEntrada("Ingrese el título del libro:");
+        String autor = solicitarEntrada("Ingrese el autor del libro:");
+        String categoria = solicitarEntrada("Ingrese la categoría del libro:");
+        int ejemplaresDisponibles = Integer.parseInt(solicitarEntrada("Ingrese la cantidad de ejemplares disponibles del libro:"));
+        Libro libro = new Libro(titulo, autor, categoria, ejemplaresDisponibles);
+        biblioteca.agregarLibro(libro);
+        System.out.println("Libro agregado con éxito.");
+    }
 
-        biblioteca.agregarUsuario(usuario1);
-        biblioteca.agregarUsuario(usuario2);
+    public static void eliminarLibro() {
+        String titulo = solicitarEntrada("Ingrese el título del libro que desea eliminar:");
+        Libro libro = buscarLibroPorTitulo(titulo);
+        if (libro != null) {
+            biblioteca.eliminarLibro(libro);
+            System.out.println("Libro eliminado con éxito.");
+        } else {
+            System.out.println("Libro no encontrado.");
+        }
+    }
 
-        Administrador administrador = new Administrador(biblioteca);
+    public static void realizarPrestamo() {
+        String rutUsuario = solicitarRut();
+        Usuario usuario = buscarUsuarioPorRut(rutUsuario);
+        if (usuario == null) {
+            System.out.println("Usuario no encontrado.");
+            return;
+        }
 
-        administrador.realizarPrestamo(usuario1, libro1);
-        administrador.realizarPrestamo(usuario2, libro2);
-        administrador.realizarPrestamo(usuario1, libro3);
-        administrador.realizarDevolucion(usuario1, libro1);
+        String tituloLibro = solicitarEntrada("Ingrese el título del libro que se prestará:");
+        Libro libro = buscarLibroPorTitulo(tituloLibro);
+        if (libro == null) {
+            System.out.println("Libro no encontrado.");
+            return;
+        }
 
-        administrador.eliminarUsuario(usuario2);
+        if (!validarPrestamo(usuario, libro)) {
+            System.out.println("No se puede realizar el préstamo. El libro no está disponible.");
+            return;
+        }
 
-        System.out.println("Información de los libros en el catálogo:");
+        biblioteca.realizarPrestamo(usuario, libro);
+        System.out.println("Préstamo realizado con éxito.");
+    }
+
+    public static void realizarDevolucion() {
+        String rutUsuario = solicitarRut();
+        Usuario usuario = buscarUsuarioPorRut(rutUsuario);
+        if (usuario == null) {
+            System.out.println("Usuario no encontrado.");
+            return;
+        }
+
+        String tituloLibro = solicitarEntrada("Ingrese el título del libro que se devolverá:");
+        Libro libro = buscarLibroPrestadoPorUsuario(usuario, tituloLibro);
+        if (libro == null) {
+            System.out.println("Libro no encontrado o no prestado a este usuario.");
+            return;
+        }
+
+        biblioteca.realizarDevolucion(usuario, libro);
+        System.out.println("Devolución realizada con éxito.");
+    }
+
+    public static void mostrarInformacion() {
+        System.out.println("------ Información ------");
+        System.out.println("Libros en el catálogo:");
         for (Libro libro : biblioteca.getCatalogo()) {
             System.out.println(libro);
         }
-
-        System.out.println("\nInformación de los usuarios registrados:");
+        System.out.println("\nUsuarios registrados:");
         for (Usuario usuario : biblioteca.getUsuarios()) {
             System.out.println(usuario);
         }
-
         System.out.println("\nPréstamos registrados:");
         for (Map.Entry<Usuario, List<Libro>> entry : biblioteca.getPrestamos().entrySet()) {
             Usuario usuario = entry.getKey();
@@ -48,5 +112,61 @@ public class Main {
                 System.out.println("- " + libro.getTitulo());
             }
         }
+    }
+
+    private static Usuario buscarUsuarioPorRut(String rut) {
+        for (Usuario u : biblioteca.getUsuarios()) {
+            if (u.getRut().equals(rut)) {
+                return u;
+            }
+        }
+        return null;
+    }
+
+    private static String solicitarRut() {
+        String rut;
+        while (true) {
+            try {
+                rut = solicitarEntrada("Ingrese el RUT del usuario (sin puntos ni guión):");
+                if (!validarRut(rut)) {
+                    throw new IllegalArgumentException("El formato del RUT es inválido. Por favor, ingrese nuevamente.");
+                }
+                break;
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+        return rut;
+    }
+
+    private static boolean validarRut(String rut) {
+        return rut.matches("\\d{9}"); // es simple, solo verifica que sean 9 dígitos
+    }
+
+    private static String solicitarEntrada(String mensaje) {
+        System.out.println(mensaje);
+        return scanner.nextLine();
+    }
+
+    private static Libro buscarLibroPorTitulo(String titulo) {
+        for (Libro l : biblioteca.getCatalogo()) {
+            if (l.getTitulo().equals(titulo)) {
+                return l;
+            }
+        }
+        return null;
+    }
+
+    private static Libro buscarLibroPrestadoPorUsuario(Usuario usuario, String titulo) {
+        for (Libro l : biblioteca.getPrestamos().get(usuario)) {
+            if (l.getTitulo().equals(titulo)) {
+                return l;
+            }
+        }
+        return null;
+    }
+
+    private static boolean validarPrestamo(Usuario usuario, Libro libro) {
+        return libro.getEjemplaresDisponibles() > 0 && !biblioteca.getPrestamos().get(usuario).contains(libro);
     }
 }
