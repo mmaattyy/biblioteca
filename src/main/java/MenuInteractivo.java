@@ -30,7 +30,7 @@ public class MenuInteractivo {
             System.out.println("Seleccione una opción: ");
 
             int opcionSeleccionada = scanner.nextInt();
-            scanner.nextLine(); // Limpiar el buffer del scanner
+            scanner.nextLine();
 
             if (opcionSeleccionada >= 1 && opcionSeleccionada <= OPCIONES.size()) {
                 List<Runnable> listaOpciones = new ArrayList<>(OPCIONES.values());
